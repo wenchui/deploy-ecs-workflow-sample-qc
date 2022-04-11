@@ -14,14 +14,14 @@
 
 ## **使用样例**
 完成springcloud项目部署:
-(1).项目打包
+### (1).项目打包
 ```yaml
     # 完成java项目打包
     - name: build maven project
       run: mvn clean -U package -Dmaven.test.skip
 ```
 
-(2).obs-action的使用，通过华为云账号的AK,SK，将打包好的target/demoapp.jar包上传到华为云OBS桶bucket-test下的workflow/springboot-web/v1.0.0.1/目录
+### (2).obs-action的使用，通过华为云账号的AK,SK，将打包好的target/demoapp.jar包上传到华为云OBS桶bucket-test下的workflow/springboot-web/v1.0.0.1/目录
 ```yaml
     - name: Upload To Huawei OBS
       uses: huaweicloud/obs-helper@v1.0.0
@@ -35,7 +35,7 @@
         local_file_path: target/demoapp.jar
         obs_file_path: workflow/springboot-web/v1.0.0.1/
 ```
-(3).ssh-remote-action的使用
+### (3).ssh-remote-action的使用
 使用该action批量发起远程命令，完成各类操作,将需要执行的命令写到commands参数后，一个命令一行
 ```yaml
     - name: install jdk,stop service
@@ -48,8 +48,41 @@
           yum install -y java-1.8.0-openjdk  java-1.8.0-openjdk-devel
           java -version
 ```
-
-(4).scp-remote-action的使用
+### (4).服务部署前，需要对老服务进行备份
+备份需要设置一个时间戳，文件都备份到这个目录下
+#### 设置环境变量:
+```yaml
+env:
+  ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
+  CURRENT_DATE: ''
+```
+#### 初始化环境变量为当前时间，精确到秒:
+```yaml
+env:
+    - name: check env set and output
+      run: |
+        echo "##[set-env name=CURRENT_DATE;]$(date +%Y-%m-%d-%H-%M-%S)"
+        echo ${{ env.CURRENT_DATE }}
+```
+#### 对文件进行备份
+```yaml
+    # 停止服务并备份老版本,初次部署可以跳过
+    - name: backup app adn service file
+      uses: huaweicloud/ssh-remote-action@v1.2
+      with:
+        ipaddr: 192.168.158.132
+        username: ${{ secrets.USERNAME }}
+        password: ${{ secrets.PASSWORD }}
+        commands: |
+          systemctl stop demoapp.service
+          mkdir -p /opt/backup/demoapp/${{ env.CURRENT_DATE }}
+          mv /usr/local/demoapp.jar /opt/backup/demoapp/${{ env.CURRENT_DATE }}
+          cp /usr/local/start-demoapp.sh /opt/backup/demoapp/${{ env.CURRENT_DATE }}
+          cp /usr/local/stop-demoapp.sh /opt/backup/demoapp/${{ env.CURRENT_DATE }}
+          cp /etc/systemd/system/demoapp.service /opt/backup/demoapp/${{ env.CURRENT_DATE }}
+          ls -la /opt/backup/demoapp/${{ env.CURRENT_DATE }}
+```
+### (5).scp-remote-action的使用
 使用该action将本地的文件或者目录批量上传到远端服务器，或者将远端服务器上的文件或目录下载到本地
 ```yaml
     - name: deploy service
@@ -65,5 +98,28 @@
           file bin/start-demoapp.sh /usr/local/
           file bin/stop-demoapp.sh /usr/local/
 ```
+
+### (6)、如果发现服务有问题，请按照如下方式进行回滚
+```yaml
+    # 如果部署失败，可以通过如下方式回滚
+    - name: Rollback app and service files
+      uses: huaweicloud/ssh-remote-action@v1.2
+      with:
+        ipaddr: 192.168.158.132
+        username: ${{ secrets.USERNAME }}
+        password: ${{ secrets.PASSWORD }}
+        commands: |
+          systemctl stop demoapp.service
+          rm -rf /usr/local/demoapp.jar
+          rm -rf /usr/local/start-demoapp.sh
+          rm -rf /usr/local/stop-demoapp.sh
+          rm -rf /etc/systemd/system/demoapp.service
+          cp /opt/backup/demoapp/${{ env.CURRENT_DATE }}/demoapp.jar /usr/local/demoapp.jar
+          cp /opt/backup/demoapp/${{ env.CURRENT_DATE }}/start-demoapp.sh /usr/local/start-demoapp.sh
+          cp /opt/backup/demoapp/${{ env.CURRENT_DATE }}/stop-demoapp.sh /usr/local/stop-demoapp.sh
+          cp /opt/backup/demoapp/${{ env.CURRENT_DATE }}/demoapp.service /etc/systemd/system/demoapp.service
+          systemctl daemon-reload
+          systemctl start demoapp.service
+```          
 完整样例请阅读 .github/workflows/deploy-jar-to-ecs-by-action.yml
 另外提供全原生方案，不通过action，通过纯脚本部署，请参考.github/workflows/deploy-jar-to-ecs-by-command.yml
