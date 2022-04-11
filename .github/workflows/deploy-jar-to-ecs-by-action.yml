@@ -5,6 +5,10 @@ on:
     branches: 
     - 'master'
 
+env:
+  ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
+  CURRENT_DATE: ''
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -13,6 +17,11 @@ jobs:
     - name: Check Out 
       uses: actions/checkout@v2
 
+    - name: check env set and output
+      run: |
+        echo "##[set-env name=CURRENT_DATE;]$(date +%Y-%m-%d-%H-%M-%S)"
+        echo ${{ env.CURRENT_DATE }}
+        
     - name: Set up JDK 1.8
       uses: actions/setup-java@v1
       with:
@@ -48,7 +57,7 @@ jobs:
           yum install -y java-1.8.0-openjdk  java-1.8.0-openjdk-devel
 
     # 停止服务并备份老版本,初次部署可以跳过
-    - name: install jdk,stop service
+    - name: backup app adn service file
       uses: huaweicloud/ssh-remote-action@v1.2
       with:
         ipaddr: 192.168.158.132
@@ -56,7 +65,12 @@ jobs:
         password: ${{ secrets.PASSWORD }}
         commands: |
           systemctl stop demoapp.service
-          export currentDate=`date +%Y-%m-%d-%H-%M-%S` && mkdir -p /opt/backup/demoapp/\$currentDate/ && mv /usr/local/demoapp.jar /opt/backup/demoapp/\$currentDate/
+          mkdir -p /opt/backup/demoapp/${{ env.CURRENT_DATE }}
+          mv /usr/local/demoapp.jar /opt/backup/demoapp/${{ env.CURRENT_DATE }}
+          cp /usr/local/start-demoapp.sh /opt/backup/demoapp/${{ env.CURRENT_DATE }}
+          cp /usr/local/stop-demoapp.sh /opt/backup/demoapp/${{ env.CURRENT_DATE }}
+          cp /etc/systemd/system/demoapp.service /opt/backup/demoapp/${{ env.CURRENT_DATE }}
+          ls -la /opt/backup/demoapp/${{ env.CURRENT_DATE }}
 
     # 部署服务 部署jar包，并添加到systemctl 服务器中，方便启停
     - name: deploy service
@@ -71,7 +85,7 @@ jobs:
           file bin/demoapp.service /etc/systemd/system/
           file bin/start-demoapp.sh /usr/local/
           file bin/stop-demoapp.sh /usr/local/
-          
+
     # 修改文件权限并启动服务
     - name: install jdk,stop service
       uses: huaweicloud/ssh-remote-action@v1.2
@@ -90,3 +104,23 @@ jobs:
       run: |
         sleep 30
         curl -kv http://192.168.158.132:8080/
+
+    # 如果部署失败，可以通过如下方式回滚,初次部署不适用
+#    - name: Rollback app and service files
+#      uses: huaweicloud/ssh-remote-action@v1.2
+#      with:
+#        ipaddr: 192.168.158.132
+#        username: ${{ secrets.USERNAME }}
+#        password: ${{ secrets.PASSWORD }}
+#        commands: |
+#          systemctl stop demoapp.service
+#          rm -rf /usr/local/demoapp.jar
+#          rm -rf /usr/local/start-demoapp.sh
+#          rm -rf /usr/local/stop-demoapp.sh
+#          rm -rf /etc/systemd/system/demoapp.service
+#          cp /opt/backup/demoapp/${{ env.CURRENT_DATE }}/demoapp.jar /usr/local/demoapp.jar
+#          cp /opt/backup/demoapp/${{ env.CURRENT_DATE }}/start-demoapp.sh /usr/local/start-demoapp.sh
+#          cp /opt/backup/demoapp/${{ env.CURRENT_DATE }}/stop-demoapp.sh /usr/local/stop-demoapp.sh
+#          cp /opt/backup/demoapp/${{ env.CURRENT_DATE }}/demoapp.service /etc/systemd/system/demoapp.service
+#          systemctl daemon-reload
+#          systemctl start demoapp.service
