@@ -22,7 +22,7 @@ jobs:
         echo "##[set-env name=CURRENT_DATE;]$(date +%Y-%m-%d-%H-%M-%S)"
         echo ${{ env.CURRENT_DATE }}
         
-    - name: Set up JDK 1.8
+    - name: Set up JDK 1.8 for maven build
       uses: actions/setup-java@v1
       with:
         java-version: 1.8
@@ -38,7 +38,7 @@ jobs:
       with:
         access_key: ${{ secrets.ACCESSKEY }}
         secret_key: ${{ secrets.SECRETACCESSKEY }}
-        region: region
+        region: cn-north-4
         bucket_name: bucket-test
         operation_type: upload
         local_file_path: target/demoapp.jar
@@ -46,8 +46,7 @@ jobs:
 
 
     # 检查并安装jdk,当前demo需要安装jdk1.8,高版本可能不兼容,初始化系统是需要，如果不需要可以跳过
-    #
-    - name: install jdk,stop service
+    - name: install jdk
       uses: huaweicloud/ssh-remote-action@v1.2
       with:
         ipaddr: 192.168.158.132
@@ -57,7 +56,7 @@ jobs:
           yum install -y java-1.8.0-openjdk  java-1.8.0-openjdk-devel
 
     # 停止服务并备份老版本,初次部署可以跳过
-    - name: backup app adn service file
+    - name: backup app and service file
       uses: huaweicloud/ssh-remote-action@v1.2
       with:
         ipaddr: 192.168.158.132
@@ -73,7 +72,7 @@ jobs:
           ls -la /opt/backup/demoapp/${{ env.CURRENT_DATE }}
 
     # 部署服务 部署jar包，并添加到systemctl 服务器中，方便启停
-    - name: deploy service
+    - name: upload local file to remote server,deploy service
       uses: huaweicloud/scp-remote-action@v1.1
       with:
         ipaddr: 192.168.158.132
@@ -87,7 +86,7 @@ jobs:
           file bin/stop-demoapp.sh /usr/local/
 
     # 修改文件权限并启动服务
-    - name: install jdk,stop service
+    - name: chage file mode to 755 and startup service
       uses: huaweicloud/ssh-remote-action@v1.2
       with:
         ipaddr: 192.168.158.132

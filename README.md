@@ -15,6 +15,14 @@
 ## **使用样例**
 完成springcloud项目部署:
 ### (1).项目打包
+打包前需要先安装jdk和maven
+```yaml
+    - name: Set up JDK 1.8 for maven build
+      uses: actions/setup-java@v1
+      with:
+        java-version: 1.8
+```
+然后开始打包
 ```yaml
     # 完成java项目打包
     - name: build maven project
@@ -122,4 +130,4 @@ env:
           systemctl start demoapp.service
 ```          
 完整样例请阅读 .github/workflows/deploy-jar-to-ecs-by-action.yml
-另外提供全原生方案，不通过action，通过纯脚本部署，请参考.github/workflows/deploy-jar-to-ecs-by-command.yml
+另外提供全原生方案，不通过action，通过纯脚本的原生部署方案，请参考.github/workflows/deploy-jar-to-ecs-by-command.yml
