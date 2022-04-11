@@ -1,0 +1,11 @@
+[Unit]
+Description=springboot appdemo
+[Service]
+Type=simple
+Restart=always
+User=root
+ExecStart=/usr/bin/sh /usr/local/start-demoapp.sh
+ExecStop=/usr/bin/sh /usr/local/stop-demoapp.sh
+
+[Install]
+WantedBy=multi-user.target
