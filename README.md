@@ -11,6 +11,8 @@
 (1).获取远端linux服务器的IP,账号,密码
 (2).需要开通华为云的OBS服务，并建好桶，OBS主页:https://www.huaweicloud.com/product/obs.html,OBS文档:https://support.huaweicloud.com/obs/
 (3).需要在项目的setting--Secret--Actions下添加 USERNAME,PASSWORD,和华为云OBS服务的ACCESSKEY,SECRETACCESSKEY两个参数,获取ak/sk方式:https://support.huaweicloud.com/api-obs/obs_04_0116.html
+(4).注意将env:ipaddr中的${ip_address}替换为真实的IP地址
+(5).注意将env:REGIONID中的${region_id}为需要部署的真实region，如cn-north-4
 
 ## **使用样例**
 完成springcloud项目部署:

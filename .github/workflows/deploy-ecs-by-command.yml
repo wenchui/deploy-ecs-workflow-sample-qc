@@ -4,7 +4,9 @@ on:
   push:
     branches: 
     - 'master'
-
+env: 
+  ipaddr: ${ip_address}
+  REGIONID: ${region_id}
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -22,18 +24,18 @@ jobs:
     - name: build maven project
       run: mvn clean -U package -Dmaven.test.skip 
 
-    # 上传当前版本到OBS中归档，需要提前准备OBS的AK/SK,并在github项目添加HUAWEI_AK和HUAWEI_SK两个secrets
-    - name: install obs and upload war/jar to obs
-      run: |
-        wget https://obs-community.obs.cn-north-1.myhuaweicloud.com/obsutil/current/obsutil_linux_amd64.tar.gz
-        tar -zxf obsutil_linux_amd64.tar.gz
-        mv obsutil_linux_amd64_5.3.4 obsutil
-        chmod -R 755 obsutil/*
-        obsutil/obsutil version
-        obsutil/obsutil config -i=${{ secrets.HUAWEI_AK }} -k=${{ secrets.HUAWEI_SK }} -e=obs.cn-north-4.myhuaweicloud.com
-        obsutil/obsutil ls -s
-        obsutil/obsutil cp target/demoapp.jar obs://huaweihdnbucket/workflow/springboot-web/v1.0.0.1/
-        obsutil/obsutil ls -s obs://huaweihdnbucket/workflow/springboot-web/v1.0.0.1/
+    # 上传当前版本到OBS中归档，需要提前准备OBS的AK/SK,并在github项目添加ACCESSKEY和HUAWEI_SK两个SECRETACCESSKEY
+    - name: Upload To Huawei OBS
+      uses: huaweicloud/obs-helper@v1.0.0
+      id: upload_file_to_obs
+      with:
+        access_key: ${{ secrets.ACCESSKEY }}
+        secret_key: ${{ secrets.SECRETACCESSKEY }}
+        region: ${{ env.REGIONID }}
+        bucket_name: bucket-test
+        operation_type: upload
+        local_file_path: target/demoapp.jar
+        obs_file_path: workflow/springboot-web/v1.0.0.1/
 
     # 安装sshpass
     - name: install sshpass
@@ -46,34 +48,34 @@ jobs:
     # 停止服务,初次部署可以跳过
     - name: stop service
       run: |
-         sshpass -p ${{ secrets.PASSWORD }}  ssh -o StrictHostKeyChecking=no ${{ secrets.USERNAME }}@192.168.158.132 "systemctl stop demoapp.service"
+         sshpass -p ${{ secrets.PASSWORD }}  ssh -o StrictHostKeyChecking=no ${{ secrets.USERNAME }}@${{ env.ipaddr }} "systemctl stop demoapp.service"
 
     # 备份老版本,初次部署可以跳过
     - name: backup old service
       run: |
         currentDate=`date +%Y-%m-%d-%H-%M-%S`
-        sshpass -p ${{ secrets.PASSWORD }}  ssh -o StrictHostKeyChecking=no ${{ secrets.USERNAME }}@192.168.158.132 "mkdir -p /opt/backup/demoapp/\$currentDate/"
-        sshpass -p ${{ secrets.PASSWORD }}  ssh -o StrictHostKeyChecking=no ${{ secrets.USERNAME }}@192.168.158.132 "mv /usr/local/demoapp.jar /opt/backup/demoapp/\$currentDate/"
+        sshpass -p ${{ secrets.PASSWORD }}  ssh -o StrictHostKeyChecking=no ${{ secrets.USERNAME }}@${{ env.ipaddr }} "mkdir -p /opt/backup/demoapp/\$currentDate/"
+        sshpass -p ${{ secrets.PASSWORD }}  ssh -o StrictHostKeyChecking=no ${{ secrets.USERNAME }}@${{ env.ipaddr }} "mv /usr/local/demoapp.jar /opt/backup/demoapp/\$currentDate/"
 
     # 部署服务 部署jar包，并添加到systemctl 服务器中，方便启停
     - name: deploy springweb jar to remote server
       run: |
-        sshpass -p ${{ secrets.PASSWORD }}  scp  -o StrictHostKeyChecking=no  target/demoapp.jar ${{ secrets.USERNAME }}@192.168.158.132:/usr/local/
-        sshpass -p ${{ secrets.PASSWORD }}  scp  -o StrictHostKeyChecking=no  bin/demoapp.service ${{ secrets.USERNAME }}@192.168.158.132:/etc/systemd/system/
-        sshpass -p ${{ secrets.PASSWORD }}  scp  -o StrictHostKeyChecking=no  bin/start-demoapp.sh ${{ secrets.USERNAME }}@192.168.158.132:/usr/local/
-        sshpass -p ${{ secrets.PASSWORD }}  scp  -o StrictHostKeyChecking=no  bin/stop-demoapp.sh ${{ secrets.USERNAME }}@192.168.158.132:/usr/local/
-        sshpass -p ${{ secrets.PASSWORD }}  ssh -o StrictHostKeyChecking=no ${{ secrets.USERNAME }}@192.168.158.132 "chmod 755 /usr/local/start-demoapp.sh && chmod 755 /usr/local/stop-demoapp.sh"
-        sshpass -p ${{ secrets.PASSWORD }}  ssh -o StrictHostKeyChecking=no ${{ secrets.USERNAME }}@192.168.158.132 "systemctl daemon-reload"
+        sshpass -p ${{ secrets.PASSWORD }}  scp  -o StrictHostKeyChecking=no  target/demoapp.jar ${{ secrets.USERNAME }}@${{ env.ipaddr }}:/usr/local/
+        sshpass -p ${{ secrets.PASSWORD }}  scp  -o StrictHostKeyChecking=no  bin/demoapp.service ${{ secrets.USERNAME }}@${{ env.ipaddr }}:/etc/systemd/system/
+        sshpass -p ${{ secrets.PASSWORD }}  scp  -o StrictHostKeyChecking=no  bin/start-demoapp.sh ${{ secrets.USERNAME }}@${{ env.ipaddr }}:/usr/local/
+        sshpass -p ${{ secrets.PASSWORD }}  scp  -o StrictHostKeyChecking=no  bin/stop-demoapp.sh ${{ secrets.USERNAME }}@${{ env.ipaddr }}:/usr/local/
+        sshpass -p ${{ secrets.PASSWORD }}  ssh -o StrictHostKeyChecking=no ${{ secrets.USERNAME }}@${{ env.ipaddr }} "chmod 755 /usr/local/start-demoapp.sh && chmod 755 /usr/local/stop-demoapp.sh"
+        sshpass -p ${{ secrets.PASSWORD }}  ssh -o StrictHostKeyChecking=no ${{ secrets.USERNAME }}@${{ env.ipaddr }} "systemctl daemon-reload"
 
     
-    # 启动服务 sshpass -p ${{ secrets.PASSWORD }}  ssh -o StrictHostKeyChecking=no ${{ secrets.USERNAME }}@192.168.158.132 "java -jar /usr/local/demoapp.jar"
+    # 启动服务
     - name: start spring-web application
       run: |
-        sshpass -p ${{ secrets.PASSWORD }}  ssh -o StrictHostKeyChecking=no ${{ secrets.USERNAME }}@192.168.158.132 "systemctl start demoapp.service"
+        sshpass -p ${{ secrets.PASSWORD }}  ssh -o StrictHostKeyChecking=no ${{ secrets.USERNAME }}@${{ env.ipaddr }} "systemctl start demoapp.service"
         
  
     # 检测前端页面和后端接口是否都能正常访问
     - name: check web app status
       run: |
         sleep 30
-        curl -kv http://192.168.158.132:8080/
+        curl -kv http://${{ env.ipaddr }}:8080/
