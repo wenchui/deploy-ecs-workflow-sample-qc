@@ -11,10 +11,20 @@
 (1).获取远端linux服务器的IP,账号,密码
 (2).需要开通华为云的OBS服务，并建好桶，OBS主页:https://www.huaweicloud.com/product/obs.html,OBS文档:https://support.huaweicloud.com/obs/
 (3).需要在项目的setting--Secret--Actions下添加 USERNAME,PASSWORD,和华为云OBS服务的ACCESSKEY,SECRETACCESSKEY两个参数,获取ak/sk方式:https://support.huaweicloud.com/api-obs/obs_04_0116.html
+(4).注意将env:ipaddr中的${ip_address}替换为真实的IP地址
+(5).注意将env:REGIONID中的${region_id}为需要部署的真实region，如cn-north-4
 
 ## **使用样例**
 完成springcloud项目部署:
 ### (1).项目打包
+打包前需要先安装jdk和maven
+```yaml
+    - name: Set up JDK 1.8 for maven build
+      uses: actions/setup-java@v1
+      with:
+        java-version: 1.8
+```
+然后开始打包
 ```yaml
     # 完成java项目打包
     - name: build maven project
@@ -122,4 +132,4 @@ env:
           systemctl start demoapp.service
 ```          
 完整样例请阅读 .github/workflows/deploy-jar-to-ecs-by-action.yml
-另外提供全原生方案，不通过action，通过纯脚本部署，请参考.github/workflows/deploy-jar-to-ecs-by-command.yml
+另外提供全原生方案，不通过action，通过纯脚本的原生部署方案，请参考.github/workflows/deploy-jar-to-ecs-by-command.yml
