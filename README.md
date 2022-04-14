@@ -1,21 +1,22 @@
 # 部署远程节点样例
 
-基于github workflow，结合官方的action和华为云的 obs,ssh-remote和scp-remote等action，完成如下工作
-1、完成java代码的打包
-2、将打包好的jar/war包上传到obs归档
-3、停止远程服务器上的服务，并完成备份
-4、部署jar/war包和配置文件到远程服务，并启动服务
-5、检查服务是否正常启动
+基于github workflow，结合官方的action和华为云的 obs,ssh-remote和scp-remote等action，完成如下工作  
+1、完成java代码的打包  
+2、将打包好的jar/war包上传到obs归档  
+3、停止远程服务器上的服务，并完成备份  
+4、部署jar/war包和配置文件到远程服务，并启动服务  
+5、检查服务是否正常启动  
 
 ## **前置工作**
-(1).获取远端linux服务器的IP,账号,密码
-(2).需要开通华为云的OBS服务，并建好桶，OBS主页:https://www.huaweicloud.com/product/obs.html,OBS文档:https://support.huaweicloud.com/obs/
-(3).需要在项目的setting--Secret--Actions下添加 USERNAME,PASSWORD,和华为云OBS服务的ACCESSKEY,SECRETACCESSKEY两个参数,获取ak/sk方式:https://support.huaweicloud.com/api-obs/obs_04_0116.html
-(4).注意将env:ipaddr中的${ip_address}替换为真实的IP地址
-(5).注意将env:REGIONID中的${region_id}为需要部署的真实region，如cn-north-4
+(1).获取远端linux服务器的IP,账号,密码  
+(2).需要开通华为云的OBS服务，并建好桶，OBS主页:https://www.huaweicloud.com/product/obs.html,OBS文档:https://support.huaweicloud.com/obs/  
+(3).需要在项目的setting--Secret--Actions下添加 USERNAME,PASSWORD,和华为云OBS服务的ACCESSKEY,SECRETACCESSKEY两个参数,获取ak/sk方 
+ 式:https://support.huaweicloud.com/api-obs/obs_04_0116.html
+(4).注意将env:ipaddr中的 ip_address 替换为真实的IP地址  
+(5).注意将env:REGIONID中的 region_id为 需要部署的真实region，如cn-north-4  
 
 ## **使用样例**
-完成springcloud项目部署:
+完成springcloud项目部署:  
 ### (1).项目打包
 打包前需要先安装jdk和maven
 ```yaml
@@ -51,15 +52,15 @@
     - name: install jdk,stop service
       uses: huaweicloud/ssh-remote-action@v1.2
       with:
-        ipaddr: 192.168.158.132
+        ipaddr: ${{ env.ipaddr }}
         username: ${{ secrets.USERNAME }}
         password: ${{ secrets.PASSWORD }}
         commands: |
           yum install -y java-1.8.0-openjdk  java-1.8.0-openjdk-devel
           java -version
 ```
-### (4).服务部署前，需要对老服务进行备份
-备份需要设置一个时间戳，文件都备份到这个目录下
+### (4).服务部署前，需要对老服务进行备份  
+备份需要设置一个时间戳，文件都备份到这个目录下  
 #### 设置环境变量:
 ```yaml
 env:
@@ -80,7 +81,7 @@ env:
     - name: backup app adn service file
       uses: huaweicloud/ssh-remote-action@v1.2
       with:
-        ipaddr: 192.168.158.132
+        ipaddr: ${{ env.ipaddr }}
         username: ${{ secrets.USERNAME }}
         password: ${{ secrets.PASSWORD }}
         commands: |
@@ -98,7 +99,7 @@ env:
     - name: deploy service
       uses: huaweicloud/scp-remote-action@v1.1
       with:
-        ipaddr: 192.168.158.132
+        ipaddr: ${{ env.ipaddr }}
         username: ${{ secrets.USERNAME }}
         password: ${{ secrets.PASSWORD }}
         operation_type: upload
@@ -115,7 +116,7 @@ env:
     - name: Rollback app and service files
       uses: huaweicloud/ssh-remote-action@v1.2
       with:
-        ipaddr: 192.168.158.132
+        ipaddr: ${{ env.ipaddr }}
         username: ${{ secrets.USERNAME }}
         password: ${{ secrets.PASSWORD }}
         commands: |
@@ -131,5 +132,5 @@ env:
           systemctl daemon-reload
           systemctl start demoapp.service
 ```          
-完整样例请阅读 .github/workflows/deploy-jar-to-ecs-by-action.yml
+完整样例请阅读 .github/workflows/deploy-jar-to-ecs-by-action.yml  
 另外提供全原生方案，不通过action，通过纯脚本的原生部署方案，请参考.github/workflows/deploy-jar-to-ecs-by-command.yml
