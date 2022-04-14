@@ -52,7 +52,7 @@
     - name: install jdk,stop service
       uses: huaweicloud/ssh-remote-action@v1.2
       with:
-        ipaddr: 192.168.158.132
+        ipaddr: ${{ env.ipaddr }}
         username: ${{ secrets.USERNAME }}
         password: ${{ secrets.PASSWORD }}
         commands: |
@@ -81,7 +81,7 @@ env:
     - name: backup app adn service file
       uses: huaweicloud/ssh-remote-action@v1.2
       with:
-        ipaddr: 192.168.158.132
+        ipaddr: ${{ env.ipaddr }}
         username: ${{ secrets.USERNAME }}
         password: ${{ secrets.PASSWORD }}
         commands: |
@@ -99,7 +99,7 @@ env:
     - name: deploy service
       uses: huaweicloud/scp-remote-action@v1.1
       with:
-        ipaddr: 192.168.158.132
+        ipaddr: ${{ env.ipaddr }}
         username: ${{ secrets.USERNAME }}
         password: ${{ secrets.PASSWORD }}
         operation_type: upload
@@ -116,7 +116,7 @@ env:
     - name: Rollback app and service files
       uses: huaweicloud/ssh-remote-action@v1.2
       with:
-        ipaddr: 192.168.158.132
+        ipaddr: ${{ env.ipaddr }}
         username: ${{ secrets.USERNAME }}
         password: ${{ secrets.PASSWORD }}
         commands: |
