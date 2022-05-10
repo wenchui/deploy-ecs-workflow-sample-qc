@@ -1,4 +1,4 @@
-name: "commit-master"
+name: "commit-deploy-jar"
 
 on:
   push:
@@ -40,10 +40,10 @@ jobs:
         access_key: ${{ secrets.ACCESSKEY }}
         secret_key: ${{ secrets.SECRETACCESSKEY }}
         region: ${{ env.REGIONID }}
-        bucket_name: bucket-test
+        bucket_name: hdn-github-action
         operation_type: upload
         local_file_path: target/demoapp.jar
-        obs_file_path: workflow/springboot-web/v1.0.0.1/
+        obs_file_path: workflow/springboot-web/v1/
 
 
     # 检查并安装jdk,当前demo需要安装jdk1.8,高版本可能不兼容,初始化系统是需要，如果不需要可以跳过
