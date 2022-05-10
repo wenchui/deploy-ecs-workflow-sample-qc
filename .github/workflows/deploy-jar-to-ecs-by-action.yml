@@ -3,13 +3,13 @@ name: "commit-master"
 on:
   push:
     branches: 
-    - 'master'
+    - 'deploy-jar'
 
 env:
   ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
   CURRENT_DATE: ''
-  ipaddr: ${ip_address}
-  REGIONID: ${region_id} 
+  ipaddr: 121.36.32.123
+  REGIONID: cn-north-4 
 jobs:
   build:
     runs-on: ubuntu-latest
