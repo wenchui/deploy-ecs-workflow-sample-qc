@@ -8,8 +8,7 @@ on:
 env:
   ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
   CURRENT_DATE: ''
-  ipaddr: ${ip_address}
-  REGIONID: ${region_id} 
+  ipaddr: '121.36.32.123'
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -22,14 +21,12 @@ jobs:
       run: |
         echo "##[set-env name=CURRENT_DATE;]$(date +%Y-%m-%d-%H-%M-%S)"
         echo ${{ env.CURRENT_DATE }}
-
-    # 停止服务并备份老版本,初次部署可以跳过
     - name: backup app and service file
       uses: huaweicloud/ssh-remote-action@v1.0.0
       with:
         ipaddr: ${{ env.ipaddr }}
-        username: ${{ secrets.USERNAME }}
-        password: ${{ secrets.PASSWORD }}
+        username: "root"
+        password: "Qcheng@2"
         commands: |
           systemctl status demoapp.service
           systemctl stop demoapp.service
