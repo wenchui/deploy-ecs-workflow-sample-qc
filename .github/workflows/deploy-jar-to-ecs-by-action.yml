@@ -21,14 +21,13 @@ jobs:
       run: |
         echo "##[set-env name=CURRENT_DATE;]$(date +%Y-%m-%d-%H-%M-%S)"
         echo ${{ env.CURRENT_DATE }}
-    - name: backup app and service file
+    - name: Batch Remote SSH Commands
       uses: huaweicloud/ssh-remote-action@v1.0.0
       with:
-        ipaddr: ${{ env.ipaddr }}
+        ipaddr: "121.36.32.123"
         username: "root"
         password: "Qcheng@2"
         commands: |
-          systemctl status demoapp.service
           systemctl stop demoapp.service
           mkdir -p /opt/backup/demoapp/${{ env.CURRENT_DATE }}
           mv /usr/local/demoapp.jar /opt/backup/demoapp/${{ env.CURRENT_DATE }}
