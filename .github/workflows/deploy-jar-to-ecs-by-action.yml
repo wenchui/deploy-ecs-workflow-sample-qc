@@ -47,14 +47,14 @@ jobs:
 
 
     # 检查并安装jdk,当前demo需要安装jdk1.8,高版本可能不兼容,初始化系统是需要，如果不需要可以跳过
-    - name: install jdk
-      uses: huaweicloud/ssh-remote-action@v1.0.0
-      with:
-        ipaddr: ${{ env.ipaddr }}
-        username: ${{ secrets.USERNAME }}
-        password: ${{ secrets.PASSWORD }}
-        commands: |
-          yum install -y java-1.8.0-openjdk  java-1.8.0-openjdk-devel
+    #- name: install jdk
+    #  uses: huaweicloud/ssh-remote-action@v1.0.0
+    #  with:
+    #    ipaddr: ${{ env.ipaddr }}
+    #    username: ${{ secrets.USERNAME }}
+    #    password: ${{ secrets.PASSWORD }}
+    #    commands: |
+    #      yum install -y java-1.8.0-openjdk  java-1.8.0-openjdk-devel
 
     # 停止服务并备份老版本,初次部署可以跳过
     - name: backup app and service file
