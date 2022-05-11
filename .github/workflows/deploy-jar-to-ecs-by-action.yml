@@ -64,7 +64,8 @@ jobs:
         username: ${{ secrets.USERNAME }}
         password: ${{ secrets.PASSWORD }}
         commands: |
-         mkdir -p /opt/backup/demoapp/${{ env.CURRENT_DATE }}
+          systemctl stop demoapp.service
+          mkdir -p /opt/backup/demoapp/${{ env.CURRENT_DATE }}
           mv /usr/local/demoapp.jar /opt/backup/demoapp/${{ env.CURRENT_DATE }}
           cp /usr/local/start-demoapp.sh /opt/backup/demoapp/${{ env.CURRENT_DATE }}
           cp /usr/local/stop-demoapp.sh /opt/backup/demoapp/${{ env.CURRENT_DATE }}
